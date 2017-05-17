@@ -29,7 +29,7 @@ else:
 
 with open(concat_file, 'w') as f:
     for i in in_files:
-        f.write("file '" + i + "'\n")
+        f.write("file '" + os.path.abspath(i) + "'\n")
 
 
 cmd = ['ffmpeg', '-f', 'concat', '-safe', '0', '-i', concat_file, '-y',
