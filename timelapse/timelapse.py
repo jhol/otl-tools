@@ -1,27 +1,31 @@
 #!/usr/bin/python3
 
+import argparse
 import os
 import sys
 from subprocess import call
 
 concat_file = '/tmp/concat.txt'
 
-def usage():
-    print('{0} FACTOR IN [IN2 ...] OUT'.format(sys.argv[0]))
-    sys.exit(1)
+parser = argparse.ArgumentParser(
+    description='Generates a timelapse video.')
+parser.add_argument('factor', metavar='FACTOR', type=int, nargs=1,
+    help='The speed-up factor (must be a power-of-2)')
+parser.add_argument('in_files', metavar='IN', type=str, nargs='+',
+    help='The output file')
+parser.add_argument('out_file', metavar='OUT', type=str, nargs=1,
+    help='The input files', default='out.mp4')
+args = parser.parse_args()
 
-if len(sys.argv) < 4:
-    usage()
-
-factor = int(sys.argv[1])
-in_files = sys.argv[2:-1]
-out_file = sys.argv[-1]
+factor = args.factor[0]
+in_files = args.in_files
+out_file = args.out_file[0]
 
 logf = [p for p in range(1, 32) if 2**p == factor]
 if len(logf) == 1:
     logf = logf[0]
 else:
-    usage()
+    print('FACTOR must be a power-of-2\n')
 
 with open(concat_file, 'w') as f:
     for i in in_files:
