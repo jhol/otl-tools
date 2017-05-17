@@ -5,8 +5,6 @@ import os
 import sys
 from subprocess import call
 
-concat_file = '/tmp/concat.txt'
-
 parser = argparse.ArgumentParser(
     description='Generates a timelapse video.')
 parser.add_argument('factor', metavar='FACTOR', type=int, nargs=1,
@@ -29,11 +27,10 @@ if len(logf) == 1:
 else:
     print('FACTOR must be a power-of-2\n')
 
-with open(concat_file, 'w') as f:
-    for i in in_files:
-        f.write("file '" + os.path.abspath(i) + "'\n")
-
-filter_complex = ('[0:v]' + 'tblend=average,framestep=2,' * logf +
+filter_complex = (
+    ''.join(['[{0}:v] '.format(i) for i in range(len(in_files))]) +
+    'concat=n={0}:v=1,'.format(len(in_files)) +
+    'tblend=average,framestep=2,' * logf +
     'setpts={0}*PTS'.format(1.0 / factor) + '[v]')
 if args.with_audio:
     filter_complex += ';[0:a]' + ','.join(['atempo=2.0'] * logf) + '[a]'
@@ -42,10 +39,9 @@ mappings = ['-map', '[v]']
 if args.with_audio:
     mappings += ['-map', '[a]']
 
-cmd = (['ffmpeg', '-f', 'concat', '-safe', '0', '-i', concat_file, '-y',
-        '-filter_complex', filter_complex] +
+cmd = (['ffmpeg', '-y'] +
+        sum([['-i', f] for f in in_files], []) +
+        ['-filter_complex', filter_complex] +
         mappings + ['-r', '30', out_file])
 print(' '.join(cmd))
 call(cmd)
-
-os.remove(concat_file)
