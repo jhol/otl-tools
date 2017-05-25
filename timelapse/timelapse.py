@@ -29,11 +29,14 @@ else:
 
 filter_complex = (
     ''.join(['[{0}:v] '.format(i) for i in range(len(in_files))]) +
-    'concat=n={0}:v=1,'.format(len(in_files)) +
+    'concat=n={0}:v=1:a=0,'.format(len(in_files)) +
     'tblend=average,framestep=2,' * logf +
     'setpts={0}*PTS'.format(1.0 / factor) + '[v]')
 if args.with_audio:
-    filter_complex += ';[0:a]' + ','.join(['atempo=2.0'] * logf) + '[a]'
+    filter_complex += (';' +
+        ''.join(['[{0}:a] '.format(i) for i in range(len(in_files))]) +
+        'concat=n={0}:v=0:a=1,'.format(len(in_files)) +
+        ','.join(['atempo=2.0'] * logf) + '[a]')
 
 mappings = ['-map', '[v]']
 if args.with_audio:
