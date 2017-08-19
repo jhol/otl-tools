@@ -10,9 +10,9 @@ parser = argparse.ArgumentParser(
 parser.add_argument('factor', metavar='FACTOR', type=int, nargs=1,
     help='The speed-up factor (must be a power-of-2)')
 parser.add_argument('in_files', metavar='IN', type=str, nargs='+',
-    help='The output file')
+    help='The input file')
 parser.add_argument('out_file', metavar='OUT', type=str, nargs=1,
-    help='The input files', default='out.mp4')
+    help='The output files', default='out.mp4')
 parser.add_argument('-a', '--with-audio', action='store_true',
     help='Include audio')
 args = parser.parse_args()
