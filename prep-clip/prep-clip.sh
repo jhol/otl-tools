@@ -9,14 +9,14 @@ usage() {
 
 [ $# -lt 2 -o $# -gt 4 ] && usage
 
-in_file=$1
-out_file=$2
+readonly in_file=$1
+readonly out_file=$2
 
 [ $# -gt 2 ] && period="-ss $3" && [ $# -gt 3 ] && period="$period -t $4"
 
-cropped=$(mktemp XXXXXX.mkv)
-wav=$(mktemp XXXXXX.wav)
-wav_out=$(mktemp XXXXXX.wav)
+readonly cropped=$(mktemp XXXXXX.mkv)
+readonly wav=$(mktemp XXXXXX.wav)
+readonly wav_out=$(mktemp XXXXXX.wav)
 
 on_exit() {
   [ -f $cropped ] && rm $cropped
