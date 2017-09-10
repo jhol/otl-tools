@@ -2,11 +2,32 @@
 
 set -e
 
+readonly vocalrediso="/usr/share/audacity/plug-ins/vocalrediso.ny"
+
 usage() {
-  >&2 echo "Usage: $0 IN_FILE OUT_FILE [START [DURATION]]"
+  >&2 echo "Usage: $0 [-i] IN_FILE OUT_FILE [START [DURATION]]"
+  >&2 echo
+  >&2 echo "  -h  Prints this text."
+  >&2 echo "  -i  Performs vocal isolation on the audio."
+  >&2 echo
   exit 1
 }
 
+isolate=''
+
+while getopts "ih" opt; do
+  case $opt in
+    i)
+      isolate='yes'
+      ;;
+
+    h)
+      usage
+      ;;
+  esac
+done
+
+shift $((OPTIND-1))
 [ $# -lt 2 -o $# -gt 4 ] && usage
 
 readonly in_file=$1
@@ -14,19 +35,21 @@ readonly out_file=$2
 
 [ $# -gt 2 ] && period="-ss $3" && [ $# -gt 3 ] && period="$period -t $4"
 
-readonly cropped=$(mktemp XXXXXX.mkv)
-readonly wav=$(mktemp XXXXXX.wav)
-readonly wav_out=$(mktemp XXXXXX.wav)
+readonly cropped=$(mktemp -p '' XXXXXX.mkv)
+readonly wav_extracted=$(mktemp -p '' XXXXXX.wav)
+readonly wav_isolated=$(mktemp -p '' XXXXXX.wav)
+readonly wav_out=$(mktemp -p '' XXXXXX.wav)
+readonly process_ny=$(mktemp -p '' process-XXXXXX.ny)
 
 on_exit() {
-  [ -f $cropped ] && rm $cropped
-  [ -f $wav ] && rm $wav
-  [ -f $wav_out ] && rm $wav_out
+  for f in $cropped $wav $wav_isolated $wav_out $process_ny; do
+    [ -f $f ] && rm $f
+  done
 }
 
 trap "on_exit" EXIT
 
-rm $cropped $wav $wav_out
+rm $cropped $wav_extracted $wav_isolated $wav_out
 
 if [ -n "$period" ]; then
   echo "Extracting clip..."
@@ -35,7 +58,42 @@ if [ -n "$period" ]; then
 fi
 
 echo "Processing audio..."
-ffmpeg -loglevel 16 -i $in_file -acodec pcm_s16le $wav
+echo "    ffmpeg"
+ffmpeg -loglevel 16 -i $in_file -acodec pcm_s16le $wav_extracted
+
+if [ "xyes" = "x$isolate" ]; then
+  echo "    ny"
+  cat > $process_ny <<EOF
+(setf plug-in "${vocalrediso}")
+(setf in-file "${wav_extracted}")
+(setf out-file "${wav_isolated}")
+
+(setf action 1)
+(setf strength 1.0)
+(setf high-transition 9000.0)
+(setf low-transition 40.0)
+(setf strength 1.0)
+
+(setf *track* (s-read in-file))
+(setf len (snd-length (aref *track* 0) 160000000))
+
+(do* ((fp (open plug-in :direction :input))
+      (ex (read fp nil) (read fp nil)))
+  ((null ex) (close fp) nil)
+  (eval ex))
+
+(s-save (catalog) len out-file)
+
+(exit)
+EOF
+  ny -l $process_ny >/dev/null
+
+  wav="$wav_isolated"
+else
+  wav="$wav_extracted"
+fi
+
+echo "    sox"
 sox $wav $wav_out \
   remix - \
   gain -n -6 \
