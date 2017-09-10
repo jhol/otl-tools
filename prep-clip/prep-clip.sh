@@ -43,8 +43,8 @@ sox $wav $wav_out \
   compand 0.02,4 5:-60,-40,-10 -9 -90 2
 
 if expr "$out_file" : '.*\.flac$' >/dev/null || \
-  echo "Encoding audio..."
   expr "$out_file" : '.*\.wav$' >/dev/null ; then
+  echo "Encoding audio..."
   ffmpeg -loglevel 16 -i $wav_out $out_file
 else
   echo "Re-attaching audio..."
