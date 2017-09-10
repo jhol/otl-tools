@@ -3,8 +3,8 @@
 set -e
 
 usage() {
-  >&2 echo Usage: $R01 IN_FILE OUT_FILE [START [DURATION]]
-  usage
+  >&2 echo "Usage: $0 IN_FILE OUT_FILE [START [DURATION]]"
+  exit 1
 }
 
 [ $# -lt 2 -o $# -gt 4 ] && usage
