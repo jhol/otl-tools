@@ -4,6 +4,9 @@ set -e
 
 readonly vocalrediso="/usr/share/audacity/plug-ins/vocalrediso.ny"
 
+##
+## Prints usage text
+##
 usage() {
   >&2 echo "Usage: $0 [-i] IN_FILE OUT_FILE [START [DURATION]]"
   >&2 echo
@@ -12,6 +15,10 @@ usage() {
   >&2 echo
   exit 1
 }
+
+#
+# Parse arguments
+#
 
 isolate=''
 
@@ -35,6 +42,10 @@ readonly out_file=$2
 
 [ $# -gt 2 ] && period="-ss $3" && [ $# -gt 3 ] && period="$period -t $4"
 
+#
+# Set up temporary files
+#
+
 readonly cropped=$(mktemp -p '' XXXXXX.mkv)
 readonly wav_extracted=$(mktemp -p '' XXXXXX.wav)
 readonly wav_isolated=$(mktemp -p '' XXXXXX.wav)
@@ -50,6 +61,10 @@ on_exit() {
 trap "on_exit" EXIT
 
 rm $cropped $wav_extracted $wav_isolated $wav_out
+
+#
+# Process video
+#
 
 if [ -n "$period" ]; then
   echo "Extracting clip..."
