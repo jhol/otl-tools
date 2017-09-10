@@ -16,6 +16,21 @@ usage() {
   exit 1
 }
 
+##
+## Checks that the tools listed in arguments are all installed.
+##
+check_tools() {
+  for cmd in "$@"; do
+    type -p $cmd >/dev/null || [ -x /usr/bin/$cmd ] || [ -x /bin/$cmd ] || [ -x /sbin/$cmd ] || {
+      >&2 echo "The following tools must be installed..."
+      >&2 echo "  $@"
+      >&2 echo "  Failed to find $cmd"
+      >&2 echo
+      exit 1
+    }
+  done
+}
+
 #
 # Parse arguments
 #
@@ -41,6 +56,13 @@ readonly in_file=$1
 readonly out_file=$2
 
 [ $# -gt 2 ] && period="-ss $3" && [ $# -gt 3 ] && period="$period -t $4"
+
+#
+# Check tools are installed
+#
+
+check_tools ffmpeg mktemp sox
+[ "xyes" = "x$isolate" ] && check_tools ny
 
 #
 # Set up temporary files
