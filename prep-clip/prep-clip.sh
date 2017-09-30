@@ -52,7 +52,7 @@ done
 shift $((OPTIND-1))
 [ $# -lt 2 -o $# -gt 4 ] && usage
 
-readonly in_file=$1
+in_file=$1
 readonly out_file=$2
 
 [ $# -gt 2 ] && period="-ss $3" && [ $# -gt 3 ] && period="$period -t $4"
