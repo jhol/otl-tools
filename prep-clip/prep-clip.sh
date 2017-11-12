@@ -31,6 +31,18 @@ check_tools() {
   done
 }
 
+##
+## Checks that the nyquist script is installed
+##
+check_vocalrediso() {
+  [ -f $vocalrediso ] || {
+    >&2 echo "The Audactity Vocal Isolation script was not found installed:"
+    >&2 echo "  $vocalrediso"
+    >&2 echo
+    exit 1
+  }
+}
+
 #
 # Parse arguments
 #
@@ -62,7 +74,7 @@ readonly out_file=$2
 #
 
 check_tools ffmpeg mktemp sox
-[ "xyes" = "x$isolate" ] && check_tools ny
+[ "xyes" = "x$isolate" ] && check_tools ny && check_vocalrediso
 
 #
 # Set up temporary files
