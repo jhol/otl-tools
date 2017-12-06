@@ -6,7 +6,8 @@
 set -e
 
 usage() {
-  >&2 echo "$0: DIR"
+  >&2 echo "Usage:"
+  >&2 echo "  $0: DIR"
   exit 1
 }
 
