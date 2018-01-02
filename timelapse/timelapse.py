@@ -15,6 +15,8 @@ parser.add_argument('out_file', metavar='OUT', type=str, nargs=1,
     help='The output files', default='out.mp4')
 parser.add_argument('-a', '--with-audio', action='store_true',
     help='Include audio')
+parser.add_argument('-r', '--frame-rate', type=int, nargs=1,
+    help='Output file frame rate', default=60)
 args = parser.parse_args()
 
 factor = args.factor[0]
@@ -45,6 +47,6 @@ if args.with_audio:
 cmd = (['ffmpeg', '-y'] +
         sum([['-i', f] for f in in_files], []) +
         ['-filter_complex', filter_complex] +
-        mappings + ['-r', '30', out_file])
+        mappings + ['-r', str(args.frame_rate), out_file])
 print(' '.join(cmd))
 call(cmd)
