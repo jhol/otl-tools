@@ -74,4 +74,5 @@ backup="
     sed 's_.*_lib/tpl/&_')
 "
 
-tar -cJvf $out $backup 
+tar -cJf $out $backup
+echo $out

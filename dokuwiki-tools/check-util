@@ -11,6 +11,16 @@ check_root() {
 }
 
 ##
+## Checks that the script is not running in the context of a root user.
+##
+check_not_root() {
+  if [ $(id -u) -eq 0 ]; then
+    >&2 echo "This script must not be run as root"
+    exit 1
+  fi
+}
+
+##
 ## Checks that the tools listed in arguments are all installed.
 ##
 check_tools() {
