@@ -4,14 +4,32 @@
 #
 
 set -e
+set -o pipefail
+set -u
 
+script_dir=$(dirname $0)
+
+##
+## Prints the usage message.
+##
 usage() {
   >&2 echo "Usage:"
   >&2 echo "  $0: DIR"
   exit 1
 }
 
+. $script_dir/check-util
+
+#
+# Check the system is ready to run the script
+#
+
 [ $# -eq 1 ] || usage
+check_tools basename date grep ls sed tar
+
+#
+# Do the backup
+#
 
 dir=$1
 out=$(pwd)/$(date +%Y%m%d)-$(basename $dir | sed 's/[^A-Za-z0-9]/-/g').tar.xz
