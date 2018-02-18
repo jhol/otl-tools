@@ -146,7 +146,6 @@ echo "    sox"
 sox $wav $wav_out \
   remix - \
   gain -n -6 \
-  bass -5.1 250 \
   compand 0.1,1 5:-60,-40,-40 6 -90 0.1
 
 if expr "$out_file" : '.*\.flac$' >/dev/null || \
