@@ -56,7 +56,10 @@ sudo true
 #
 
 echo Downloading...
-wget -q -O $dokuwiki_archive "$url"
+if ! wget -q -O $dokuwiki_archive "$url"; then
+  >&2 echo Download failed
+  exit 1
+fi
 
 #
 # Unpack the archive
