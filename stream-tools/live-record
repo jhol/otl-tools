@@ -95,7 +95,13 @@ echo "Done"
 #
 
 echo -n "Setting up Microscope capture... "
-./lenkeng-proxy -p 12000 12001 -f - | ffmpeg -loglevel 8 -i - -vcodec copy ${prefix}microscope.mkv &
+
+microscope_stream=$(find_device 'Dummy video device (0x0003)')
+
+./lenkeng-proxy -p 12000 12001 -f - | ffmpeg -loglevel 8 -i - \
+  -vcodec copy ${prefix}microscope.mkv \
+  -f v4l2 -pix_fmt yuv420p $microscope_stream &
+
 echo "Done"
 
 #
