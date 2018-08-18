@@ -1,0 +1,90 @@
+#!/bin/bash
+
+set -e
+
+find_device() {
+  v4l2-ctl --list-devices | \
+    tr '\n' '\f' | \
+    sed -e "s/\f\f/\n/g" -e 's/:\f/:/g' | \
+    tr '\f' '\n' | \
+    sed -n "s/^.*$1.*:\\t//p"
+}
+
+check_v4l2loopback() {
+  lsmod | grep -q v4l2loopback || {
+    >&2 echo "Load v4l2loopback kernel module..."
+    sudo modprobe v4l2loopback devices=8
+  }
+}
+
+trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
+
+check_v4l2loopback
+
+#
+# HDMI Capture
+#
+
+echo -n "Setting up HDMI Capture capture... "
+
+hdmi_capture_device=$(find_device 'FHD Capture')
+hdmi_capture_monitor=$(find_device 'Dummy video device (0x0000)')
+hdmi_capture_stream=$(find_device 'Dummy video device (0x0001)')
+
+ffmpeg -loglevel 8 -y -f v4l2 -input_format yuyv422 -framerate 60 -video_size 1920x1080 -i $hdmi_capture_device \
+  -f v4l2 $hdmi_capture_monitor \
+  -f v4l2 $hdmi_capture_stream \
+  -vcodec h264_nvenc -preset slow -profile high -level 5.1 -crf 10 -b:v 20M  panasonic-g7.mkv &
+
+echo "Done"
+
+#
+# Webcam
+#
+
+echo -n "Setting up Webcam capture... "
+
+webcam_device=$(find_device 'HD Pro Webcam C920')
+webcam_stream=$(find_device 'Dummy video device (0x0002)')
+
+v4l2-ctl -d $webcam_device -c exposure_absolute=100
+
+ffmpeg -loglevel 8 -y -f v4l2 -input_format h264 -video_size 1920x1080 -i $webcam_device \
+  -vcodec copy webcam.mkv \
+  -f v4l2 -pix_fmt yuv420p $webcam_stream &
+
+echo "Done"
+
+#
+# 3D Printer
+#
+
+echo -n "Setting up 3D Printer capture... "
+ffmpeg -loglevel 8 -y -i rtsp://192.168.1.150/ufirststream -vcodec copy 3d-printer.mkv &
+echo "Done"
+
+#
+# Wide Camera
+#
+
+echo -n "Setting up Wide Camera capture... "
+ffmpeg -loglevel 8 -y -i rtsp://192.168.1.138/ufirststream -vcodec copy wide.mkv &
+echo "Done"
+
+#
+# Microscope
+#
+
+echo -n "Setting up Microscope capture... "
+./lenkeng-proxy -p 12000 12001 -f - | ffmpeg -i - -vcodec copy microscope.mkv &
+echo "Done"
+
+#
+# Audio
+#
+
+echo -n "Setting up Audio capture... "
+arecord -t wav -r 48000 -f S16_LE -c 2 audio.wav 2>/dev/null &
+echo "Done"
+
+sleep infinity
