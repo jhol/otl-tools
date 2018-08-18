@@ -1,0 +1,34 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import argparse
+import socketserver as ss
+import socket
+import sys
+import threading
+
+class PacketHandler(ss.BaseRequestHandler):
+  def handle(self):
+    data = self.request[0]
+    if len(data) == 0:
+      return
+
+    for f in out_files:
+      f.write(data)
+
+    for port in out_ports:
+      tx_socket.sendto(data, ('127.0.0.1', port))
+
+if __name__ == '__main__':
+  parser = argparse.ArgumentParser(description='Receives packets from the Lenkeng HDMI capture device.')
+  parser.add_argument('-f', '--out-files', nargs='*', default=[], help='Output files')
+  parser.add_argument('-p', '--out-ports', nargs='*', default=[], help='Output ports')
+
+  args = parser.parse_args()
+
+  out_files = [sys.stdout.buffer if f == '-' else open(f, 'wb') for f in args.out_files]
+  out_ports = [int(p) for p in args.out_ports]
+  tx_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+  with ss.UDPServer(('0.0.0.0', 5004), PacketHandler) as server:
+    server.serve_forever()
