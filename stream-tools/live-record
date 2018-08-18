@@ -2,6 +2,11 @@
 
 set -e
 
+usage() {
+  echo "Usage: $0 DESTDIR"
+  echo
+}
+
 find_device() {
   v4l2-ctl --list-devices | \
     tr '\n' '\f' | \
@@ -17,9 +22,23 @@ check_v4l2loopback() {
   }
 }
 
-trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
+if [ $# != 1 ]; then
+  usage
+  exit 1
+fi
+
+dir=$1
+if [ ! -d $dir ]; then
+  >&2 echo $dir is not a directory.
+  >&2 echo
+  exit 1
+fi
+
+prefix=$1/$(date +%Y%m%d-%H%M-)
 
 check_v4l2loopback
+
+trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
 
 #
 # HDMI Capture
@@ -34,7 +53,7 @@ hdmi_capture_stream=$(find_device 'Dummy video device (0x0001)')
 ffmpeg -loglevel 8 -y -f v4l2 -input_format yuyv422 -framerate 60 -video_size 1920x1080 -i $hdmi_capture_device \
   -f v4l2 $hdmi_capture_monitor \
   -f v4l2 $hdmi_capture_stream \
-  -vcodec h264_nvenc -preset slow -profile high -level 5.1 -crf 10 -b:v 20M  panasonic-g7.mkv &
+  -vcodec h264_nvenc -preset slow -profile high -level 5.1 -crf 10 -b:v 20M ${prefix}panasonic-g7.mkv &
 
 echo "Done"
 
@@ -50,7 +69,7 @@ webcam_stream=$(find_device 'Dummy video device (0x0002)')
 v4l2-ctl -d $webcam_device -c exposure_absolute=100
 
 ffmpeg -loglevel 8 -y -f v4l2 -input_format h264 -video_size 1920x1080 -i $webcam_device \
-  -vcodec copy webcam.mkv \
+  -vcodec copy ${prefix}webcam.mkv \
   -f v4l2 -pix_fmt yuv420p $webcam_stream &
 
 echo "Done"
@@ -60,7 +79,7 @@ echo "Done"
 #
 
 echo -n "Setting up 3D Printer capture... "
-ffmpeg -loglevel 8 -y -i rtsp://192.168.1.150/ufirststream -vcodec copy 3d-printer.mkv &
+ffmpeg -loglevel 8 -y -i rtsp://192.168.1.150/ufirststream -vcodec copy ${prefix}3d-printer.mkv &
 echo "Done"
 
 #
@@ -68,7 +87,7 @@ echo "Done"
 #
 
 echo -n "Setting up Wide Camera capture... "
-ffmpeg -loglevel 8 -y -i rtsp://192.168.1.138/ufirststream -vcodec copy wide.mkv &
+ffmpeg -loglevel 8 -y -i rtsp://192.168.1.138/ufirststream -vcodec copy ${prefix}wide.mkv &
 echo "Done"
 
 #
@@ -76,7 +95,7 @@ echo "Done"
 #
 
 echo -n "Setting up Microscope capture... "
-./lenkeng-proxy -p 12000 12001 -f - | ffmpeg -i - -vcodec copy microscope.mkv &
+./lenkeng-proxy -p 12000 12001 -f - | ffmpeg -loglevel 8 -i - -vcodec copy ${prefix}microscope.mkv &
 echo "Done"
 
 #
@@ -84,7 +103,7 @@ echo "Done"
 #
 
 echo -n "Setting up Audio capture... "
-arecord -t wav -r 48000 -f S16_LE -c 2 audio.wav 2>/dev/null &
+arecord -t wav -r 48000 -f S16_LE -c 2 ${prefix}audio.wav 2>/dev/null &
 echo "Done"
 
 sleep infinity
