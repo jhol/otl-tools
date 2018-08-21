@@ -105,6 +105,21 @@ microscope_stream=$(find_device 'Dummy video device (0x0003)')
 echo "Done"
 
 #
+# Screen Capture
+#
+
+echo -n "Setting up Desktop capture... "
+
+desktop_stream=$(find_device 'Dummy video device (0x0004)')
+
+nvidia-settings -a AllowFlipping=0 >/dev/null
+ffmpeg -loglevel 8 -y -video_size 1920x1080 -framerate 60 -f x11grab -i ${DISPLAY}.0+0,0 \
+  -f v4l2 $desktop_stream \
+  -vcodec h264_nvenc -preset fast -profile high -crf 10 ${prefix}desktop.mkv &
+
+echo "Done"
+
+#
 # Audio
 #
 
