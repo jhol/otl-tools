@@ -53,7 +53,7 @@ hdmi_capture_stream=$(find_device 'Dummy video device (0x0001)')
 ffmpeg -loglevel 8 -y -f v4l2 -input_format yuyv422 -framerate 60 -video_size 1920x1080 -i $hdmi_capture_device \
   -f v4l2 $hdmi_capture_monitor \
   -f v4l2 $hdmi_capture_stream \
-  -vcodec h264_nvenc -preset slow -profile high -level 5.1 -crf 10 -b:v 20M ${prefix}panasonic-g7.mkv &
+  -vcodec h264_nvenc -preset fast -profile high -crf 10 -b:v 20M ${prefix}panasonic-g7.mkv &
 
 echo "Done"
 
